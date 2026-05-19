@@ -1,0 +1,179 @@
+
+<div class="titulo">
+  <h1>Sistema de Gestión de Empleados</h1>
+
+<p class="descripcion">
+  Plataforma de administración de personal que permite registrar, buscar, filtrar, editar y eliminar empleados.
+  Incluye validación de datos en tiempo real y gestión por género y estado civil.
+</p>
+</div>
+<hr>
+
+<div class="contenedor">
+
+
+  <div class="mensaje" [class.exito]="tipoMensaje === 'exito'" [class.error]="tipoMensaje === 'error'" *ngIf="mensaje">
+    <i class="fa-solid" [class.fa-circle-check]="tipoMensaje === 'exito'" [class.fa-circle-xmark]="tipoMensaje === 'error'"></i>
+    {{ mensaje }}
+  </div>
+
+  <!-- FORMULARIO -->
+  <section class="grid-tmp">
+    <h2>{{ empleado.id ? 'Editar empleado' : 'Registrar empleado' }}</h2>
+
+    <form (ngSubmit)="guardar()" novalidate>
+      <div class="form-grid">
+
+        <div class="campo">
+          <input
+            type="text"
+            name="nombre"
+            [(ngModel)]="empleado.nombre"
+            placeholder="Nombre"
+            [class.invalido]="errores['nombre']">
+          <span class="error-campo" *ngIf="errores['nombre']">{{ errores['nombre'] }}</span>
+        </div>
+
+        <div class="campo">
+          <input
+            type="text"
+            name="apellido"
+            [(ngModel)]="empleado.apellido"
+            placeholder="Apellido"
+            [class.invalido]="errores['apellido']">
+          <span class="error-campo" *ngIf="errores['apellido']">{{ errores['apellido'] }}</span>
+        </div>
+
+        <div class="flex">
+          <div class="campo">
+            <input
+              type="text"
+              name="dni"
+              [(ngModel)]="empleado.dni"
+              placeholder="DNI (8 dígitos)"
+              maxlength="8"
+              [class.invalido]="errores['dni']">
+            <span class="error-campo" *ngIf="errores['dni']">{{ errores['dni'] }}</span>
+          </div>
+
+          <div class="campo">
+            <select name="genero" [(ngModel)]="empleado.genero" [class.invalido]="errores['genero']">
+              <option value="">Seleccione género</option>
+              <option value="Masculino">Masculino</option>
+              <option value="Femenino">Femenino</option>
+            </select>
+            <span class="error-campo" *ngIf="errores['genero']">{{ errores['genero'] }}</span>
+          </div>
+
+          <div class="campo">
+            <select name="estadoCivil" [(ngModel)]="empleado.estadoCivil" [class.invalido]="errores['estadoCivil']">
+              <option value="">Estado civil</option>
+              <option value="Soltero">Soltero</option>
+              <option value="Casado">Casado</option>
+              <option value="Divorciado">Divorciado</option>
+            </select>
+            <span class="error-campo" *ngIf="errores['estadoCivil']">{{ errores['estadoCivil'] }}</span>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="acciones-form">
+        <button type="submit" [class.btn-editar]="empleado.id">
+          <i class="fa-solid" [class.fa-floppy-disk]="empleado.id" [class.fa-plus]="!empleado.id"></i>
+          {{ empleado.id ? 'Actualizar' : 'Guardar' }}
+        </button>
+        <button type="button" class="secundario" (click)="limpiarFormulario()">
+          <i class="fa-solid fa-xmark"></i> Limpiar
+        </button>
+      </div>
+    </form>
+  </section>
+  <br>
+  <!-- LISTADO -->
+  <section class="card">
+    <h2>Listado de empleados</h2>
+
+    <!-- BUSCADOR + FILTROS -->
+    <div class="filtros">
+      <div class="buscador">
+        <input
+          type="text"
+          [(ngModel)]="textoBusqueda"
+          placeholder="Buscar por nombre, apellido o DNI...">
+      </div>
+
+      <select [(ngModel)]="filtroGenero" name="filtroGenero">
+        <option value="">Todos los géneros</option>
+        <option value="Masculino">Masculino</option>
+        <option value="Femenino">Femenino</option>
+      </select>
+
+      <select [(ngModel)]="filtroEstadoCivil" name="filtroEstadoCivil">
+        <option value="">Todos los estados</option>
+        <option value="Soltero">Soltero</option>
+        <option value="Casado">Casado</option>
+        <option value="Divorciado">Divorciado</option>
+      </select>
+
+      <button type="button" class="secundario" (click)="limpiarFiltros()">
+        <i class="fa-solid fa-filter-circle-xmark"></i> Limpiar filtros
+      </button>
+    </div>
+
+    <div class="contador">
+      Mostrando <strong>{{ empleadosFiltrados.length }}</strong> de <strong>{{ empleados.length }}</strong> empleados
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nombre</th>
+          <th>Apellido</th>
+          <th>DNI</th>
+          <th>Género</th>
+          <th>Estado civil</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr
+          *ngFor="let emp of empleadosFiltrados"
+          [class.fila-editando]="empleado.id === emp.id"
+          [class.fila-eliminando]="idAEliminar === emp.id">
+
+          <td>{{ emp.id }}</td>
+          <td>{{ emp.nombre }}</td>
+          <td>{{ emp.apellido }}</td>
+          <td>{{ emp.dni }}</td>
+          <td>{{ emp.genero }}</td>
+          <td>{{ emp.estadoCivil }}</td>
+          <td>
+            <!-- Confirmación de eliminación inline -->
+            <ng-container *ngIf="idAEliminar === emp.id; else accionesNormales">
+              <span class="confirmar-texto">¿Eliminar?</span>
+              <button type="button" class="btn-confirmar" (click)="eliminar()">Sí</button>
+              <button type="button" class="secundario" (click)="cancelarEliminar()">No</button>
+            </ng-container>
+
+            <ng-template #accionesNormales>
+              <button type="button" class="btn-editar no-border" (click)="editar(emp)">
+                <i class="fa-solid fa-pen-to-square"></i> 
+              </button>
+              <button type="button" class="eliminar no-border" (click)="confirmarEliminar(emp.id)">
+                <i class="fa-solid fa-trash"></i> 
+              </button>
+            </ng-template>
+          </td>
+        </tr>
+
+        <tr *ngIf="empleadosFiltrados.length === 0">
+          <td colspan="7" class="sin-resultados">No se encontraron empleados</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+</div>
